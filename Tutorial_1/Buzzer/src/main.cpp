@@ -1,5 +1,10 @@
 #include <Arduino.h>
 
+/*Patrick Marinich
+  This code works without any modification
+  cool!
+*/
+
 const unsigned int BUZZ = 26;
 const unsigned int BUZZ_CHANNEL = 0;
 
@@ -46,5 +51,4 @@ void loop() {
   ledcWriteNote(BUZZ_CHANNEL, NOTE_D, octave);
   delay(500);
   ledcWriteNote(BUZZ_CHANNEL, NOTE_C, octave);
-
 }
