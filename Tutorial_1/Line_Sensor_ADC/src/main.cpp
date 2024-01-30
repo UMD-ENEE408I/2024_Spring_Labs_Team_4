@@ -1,6 +1,13 @@
 #include <Arduino.h>
 #include <Adafruit_MCP3008.h>
 
+
+/*Patrick Marinich
+  This code also works without making any changes,
+  double cool!
+*/
+
+
 Adafruit_MCP3008 adc1;
 Adafruit_MCP3008 adc2;
 
