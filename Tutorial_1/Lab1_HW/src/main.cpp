@@ -30,8 +30,8 @@ const int freq = 5000;
 const int ledChannel = 0;
 const int resolution = 10;
 
-float gyroPosX = 0;
-float gyroXOffset = 0;
+float gyroPosZ = 0;
+float gyroZOffset = 0;
 float gyroPosY = 0;
 float gyroYOffset = 0;
 
@@ -179,14 +179,18 @@ void setup(void) {
   // get gryo offset for calibration (since motors are not moving)
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
-  gyroXOffset = g.gyro.x; // what the gyro sees at no speed
+  gyroZOffset = g.gyro.z; // what the gyro sees at no speed
   gyroYOffset = g.gyro.y;
 
-  PWM_VALUE = 440;
+  PWM_VALUE = 350;
   M1_forward();
   M2_backward();
 
 }
+
+//1.53 radians about 90 degrees
+//3 radians about 180, 3.06 was too many
+double lengthOfTurn = 1.53;
 
 void loop() {
 
@@ -199,28 +203,38 @@ void loop() {
 
   /* Integration */
   // because this is pure integration, it does not take into account offset introduced by non-zero ending positions
-  gyroPosX = gyroPosX + (g.gyro.x - gyroXOffset)*(timeNow - timePrev)/1000;
+  gyroPosZ = gyroPosZ + (g.gyro.z - gyroZOffset)*(timeNow - timePrev)/1000;
   gyroPosY = gyroPosY + (g.gyro.y - gyroYOffset)*(timeNow - timePrev)/1000;
   Serial.print("Angle from x gyro (rad): ");
-  Serial.print(gyroPosX);
+  Serial.print(gyroPosZ);
   Serial.print("\t");
   Serial.print("Angle from y gyro (rad): ");
   Serial.print(gyroPosY);
   Serial.print("\n");
   delay(10);
   // for my robot, my IMU reads 0.11 rad on x gyro for 90 degrees
-  if(abs(gyroPosX) > 0.11)
+
+  if(abs(gyroPosZ) > lengthOfTurn)
   {
-    Serial.print("90 deg detected... stopping");
+    //Serial.print("90 deg detected... stopping");
     M1_stop();
     M2_stop();
     Serial.print("Terminated. Will reset after 2 seconds\n");
     delay(2000);
     Serial.print(".");
-    gyroPosX = 0;
+    gyroPosZ = 0;
     gyroPosY = 0;
+
+    //alternate between 90 degrees and 180
+    if (lengthOfTurn == 1.53){
+      lengthOfTurn = 3.00;
+    } else {
+      lengthOfTurn = 1.53;
+    }
+
     M1_forward();
     M2_backward();
     timeNow = millis(); // get current time to use for integration referance
   }
+
 }
