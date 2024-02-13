@@ -1,3 +1,6 @@
+#This is the origional file worked in, this code is identical to the other python files however
+#the other files are broken down into the different sections of this assignment
+
 import numpy as np
 import matplotlib.pyplot as plt
 import math
