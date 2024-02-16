@@ -1,5 +1,6 @@
 #include <Arduino.h>
 
+//Edward Lin
 const unsigned int BUZZ = 26;
 const unsigned int BUZZ_CHANNEL = 0;
 

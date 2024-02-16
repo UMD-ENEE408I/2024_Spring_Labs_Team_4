@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": "../../../../../Downloads/ENEE408I_Notes_Examples-main/ENEE408I_Notes_Examples-main"
+		},
+		{
+			"name": "TrajectoryTracking",
+			"path": "../../../../../Downloads/ENEE408I_Notes_Examples-main/ENEE408I_Notes_Examples-main/mouse_heltec_examples_platformio/TrajectoryTracking"
+		},
+		{
+			"name": "ENEE408I_Lab1",
+			"path": "../../../../PlatformIO/Projects/ENEE408I_Lab1"
+		},
+		{
+			"name": "Buzzer",
+			"path": "."
+		}
+	],
+	"settings": {}
+}
