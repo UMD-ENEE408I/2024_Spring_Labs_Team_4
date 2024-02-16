@@ -1,5 +1,5 @@
 #include <Arduino.h>
-// #include <Adafruit_MCP3008.h>
+#include <Adafruit_MCP3008.h>
 
 Adafruit_MCP3008 adc1;
 Adafruit_MCP3008 adc2;
