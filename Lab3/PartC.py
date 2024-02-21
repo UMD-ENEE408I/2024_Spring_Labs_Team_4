@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 rate, wavFile = wavfile.read("Cafe_with_noise.wav", mmap=False)
 print(wavFile)
 
+# Used some code from here to develop the filter:
 # https://medium.com/analytics-vidhya/how-to-filter-noise-with-a-low-pass-filter-python-885223e5e9b7
-# Filter requirements.
 T = 1/rate      # Sample Period
 fs = rate       # sample rate, Hz
 cutoff = 700    # desired cutoff frequency of the filter, Hz
