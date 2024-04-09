@@ -3,6 +3,10 @@ import wave
 import sys
 import scipy
 from scipy import signal
+import scipy.io
+import scipy.io.wavfile
+import scipy.signal as signal
+from scipy.signal import correlation_lags
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -10,10 +14,10 @@ import numpy as np
 
 
 #for testing on my laptop, these are the indicies of the microphones on here, this should be changed for final implementation on nvidia
-num1 = 1 
-num2 = 3
+num1 = 24
+num2 = 25
 CHUNK = 1024
-TIME = 2 #second
+TIME = 1 #second
 
 def get_recording_on_both():
     p = pyaudio.PyAudio()
@@ -23,7 +27,7 @@ def get_recording_on_both():
     num = 0
     for i in range(0, numdevices):
         if (p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
-            print("Input Device id", i, "-", p.get_device_info_by_host_api_device_index(0, i).get('name'), " Channels: ", p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels') )
+            print("Input Device id", i, "-", p.get_device_info_by_host_api_device_index(0, i).get('name'), " Channels: ", p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels'), " dict: ", p.get_device_info_by_host_api_device_index(0,i).get("defaultSampleRate"))
 
         name = p.get_device_info_by_host_api_device_index(0, i).get('name')
         if (name == 'default'):
@@ -35,7 +39,7 @@ def get_recording_on_both():
         
         mic1.setnchannels(1) #was 2
         mic1.setsampwidth(p.get_sample_size(pyaudio.paInt16))
-        mic1.setframerate(44100)
+        mic1.setframerate(44100) #44100
 
         
         mic2.setnchannels(1) #was 2
@@ -45,15 +49,15 @@ def get_recording_on_both():
 
         #switched channels to 1
         #44100 origionally
-        stream1 = p.open(format = pyaudio.paInt16, channels = 1, rate = 44100,input = True,input_device_index = num1)
-        stream2 = p.open(format = pyaudio.paInt16, channels = 1, rate = 44100,input = True,input_device_index = num2)
+        stream1 = p.open(format = pyaudio.paInt16, channels = 1, rate = 48000,input = True,input_device_index = num1)
+        stream2 = p.open(format = pyaudio.paInt16, channels = 1, rate = 48000,input = True,input_device_index = num2)
 
 
         print('recording....')
 
         for _ in range(0, 44100 // CHUNK*TIME):
-            mic1.writeframes(stream1.read(CHUNK))
-            mic2.writeframes(stream2.read(CHUNK))
+            mic1.writeframes(stream1.read(CHUNK,exception_on_overflow = False))
+            mic2.writeframes(stream2.read(CHUNK, exception_on_overflow = False))
         print("Done")
 
         stream1.close()
@@ -86,7 +90,7 @@ def compareAudioFiles(filepath1,filepath2):
     n = len(sig1)
     #R_xy_default = signal.correlate(sig2, sig1, mode='same') / np.sqrt(signal.correlate(sig1, sig1, mode='same')[int(n/2)] * signal.correlate(sig2, sig2, mode='same')[int(n/2)])
 
-    lags = signal.correlation_lags(len(sig1), len(sig2), mode="full")
+    lags =scipy.signal.correlation_lags(len(sig1), len(sig2), mode="full")
     #gets the lag
     lag = lags[np.argmax(R_xy_default)]
     #lag = lag + 44100
@@ -99,13 +103,13 @@ def compareAudioFiles(filepath1,filepath2):
     #determine which way the sound is, if positive then it is on the left
     #if negative then it is on the right
     #if close to zero it is stright ahead
-    plt.subplot(3,1,1)
-    plt.plot(sig1)
-    plt.subplot(3,1,2)
-    plt.plot(sig2)
-    plt.subplot(3,1,3)
-    plt.plot(R_xy_default)
-    plt.show()
+    #plt.subplot(3,1,1)
+    #plt.plot(sig1)
+    #plt.subplot(3,1,2)
+    #plt.plot(sig2)
+    #plt.subplot(3,1,3)
+    #plt.plot(R_xy_default)
+    #plt.show()
 
     THRESHOLD = 250
 
