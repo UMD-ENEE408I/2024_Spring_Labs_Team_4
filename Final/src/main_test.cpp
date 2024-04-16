@@ -1,13 +1,5 @@
+/*
 #include "move.h"
-
-#include <Arduino.h>
-#include <Adafruit_MCP3008.h>
-#include <Adafruit_MPU6050.h>
-#include <Encoder.h>
-
-Adafruit_MCP3008 adc1;
-Adafruit_MCP3008 adc2;
-Adafruit_MPU6050 mpu;
 
 const float M_I_COUNTS_TO_A = (3.3 / 1024.0) / 0.120;
 
@@ -21,31 +13,39 @@ float total_error;
 
 int base_pid = 450;
 
-float Kp = 2;
+float Kp = 0.2;
+float Kd = 10;
 float Ki = 0;
-float Kd = 1;
 
-const unsigned int ADC_1_CS = 2;
-const unsigned int ADC_2_CS = 17;
+void M1_backward(int pwm) {
+  ledcWrite(M1_IN_1_CHANNEL, pwm);
+  ledcWrite(M1_IN_2_CHANNEL, 0);
+}
 
-const unsigned int M1_IN_1 = 13;
-const unsigned int M1_IN_2 = 12;
-const unsigned int M2_IN_1 = 25;
-const unsigned int M2_IN_2 = 14;
+void M1_forward(int pwm) {
+  ledcWrite(M1_IN_1_CHANNEL, 0);
+  ledcWrite(M1_IN_2_CHANNEL, pwm);
+}
 
-const unsigned int M1_I_SENSE = 35;
-const unsigned int M2_I_SENSE = 34;
+void M1_stop() {
+  ledcWrite(M1_IN_1_CHANNEL, PWM_VALUE);
+  ledcWrite(M1_IN_2_CHANNEL, PWM_VALUE);
+}
 
-const int freq = 5000;
-const int ledChannel = 0;
-const int resolution = 10;
+void M2_backward(int pwm) {
+  ledcWrite(M2_IN_1_CHANNEL, pwm);
+  ledcWrite(M2_IN_2_CHANNEL, 0);
+}
 
-const int M_PWM_FREQ = 5000;
-const int M_PWM_BITS = 8;
-//const unsigned int MAX_PWM_VALUE = 512; // Max PWM given 8 bit resolution
+void M2_forward(int pwm) {
+  ledcWrite(M2_IN_1_CHANNEL, 0);
+  ledcWrite(M2_IN_2_CHANNEL, pwm);
+}
 
-float METERS_PER_TICK = (3.14159 * 0.032) / 360.0; // The diameter of the wheel is 0.032 not 0.031
-float TURNING_RADIUS_METERS = 4.3 / 100.0; // Wheels are about 4.3 cm from pivot point
+void M2_stop() {
+  ledcWrite(M2_IN_1_CHANNEL, PWM_VALUE);
+  ledcWrite(M2_IN_2_CHANNEL, PWM_VALUE);
+}
 
 void setup() {
   // Stop the right motor by setting pin 14 low
@@ -56,8 +56,6 @@ void setup() {
   delay(100);
 
   Serial.begin(9600);
-
-  // configure motor pins
   ledcSetup(M1_IN_1_CHANNEL, freq, resolution);
   ledcSetup(M1_IN_2_CHANNEL, freq, resolution);
   ledcSetup(M2_IN_1_CHANNEL, freq, resolution);
@@ -74,41 +72,14 @@ void setup() {
 }
 
 void loop() {
-  Encoder enc1(M1_ENC_A, M1_ENC_B);
-  Encoder enc2(M2_ENC_A, M2_ENC_B);
 
-  delay(3000);
-  straight(Kp, Ki, Kd, 600, base_pid, enc1, enc2);
+  pathPlanS(400, 1000);
+  brake();
+  delay(500);
+  Serial.print("\nDone!");
+  delay(1000);
 
-  /* arcing
-  Encoder enc1(M1_ENC_A, M1_ENC_B);
-  Encoder enc2(M2_ENC_A, M2_ENC_B);
-  
-  delay(3000);
-
-  arc(0.001, 90, 512, 0, enc1, enc2);
-  delay(500);
-  arc(0.1, 180, 512, 1, enc1, enc2);
-  delay(500);
-  arc(0.001, 90, 512, 0, enc1, enc2);
-  */
-
-  /*
-  delay(3000);
-  spin(90, 480, 1, enc1, enc2);
-  delay(500);
-  spin(90, -480, 1, enc1, enc2);
-  delay(500);
-  spin(180, 480, 1, enc1, enc2);
-  delay(500);
-  spin(180, -480, 1, enc1, enc2);
-  delay(500);
-  spin(360, 480, 1, enc1, enc2);
-  delay(500);
-  */
-
-
-  /* draft straight move function from 04/01/2024 session:
+  /* draft move function from 04/01/2024 session
 
   // Create the encoder objects after the motor has
   // stopped, else some sort exception is triggered
@@ -147,5 +118,5 @@ void loop() {
       Serial.println();
 
   }
-  */
 }
+*/
