@@ -116,22 +116,33 @@ def compareAudioFiles(filepath1,filepath2):
     if lag + THRESHOLD < 0:
         #very negative
         print("The sound is to the LEFT")
+        return -1
+
 
     elif lag - THRESHOLD > 0:
         #very positive
         print("The sound is to the RIGHT")
+        return 1
     else:
         #close to zero
+        #read again
         print("The sound is either stright ahead or behind!")
-    
+        return 0
 
 
 
 
-#first record
-get_recording_on_both()
-#then print the time delay
-compareAudioFiles('mic1.wav','mic2.wav')
+#record until it chooses left or right
+#-1 is left 1 is right
+def getSoundReadig():
+    val = 0
+    while val == 0:
+        get_recording_on_both()
+        #then print the time delay
+        val = compareAudioFiles('mic1.wav','mic2.wav')
+
+    #grab this value somehow and use it in Cpp
+    return val
 
 
 
