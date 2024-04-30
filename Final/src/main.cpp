@@ -9,7 +9,7 @@ Adafruit_MPU6050 mpu;
 
 const float M_I_COUNTS_TO_A = (3.3 / 1024.0) / 0.120;
 
-const unsigned int PWM_VALUE = 512; // Max PWM given 8 bit resolution
+//const unsigned int PWM_VALUE = 350; // Max PWM given 8 bit resolution
 
 bool status = false;
 
@@ -76,16 +76,28 @@ void loop() {
   Encoder enc1(M1_ENC_A, M1_ENC_B);
   Encoder enc2(M2_ENC_A, M2_ENC_B);
 
+/*
   delay(3000);
-  followLine(50, 0, 0, base_pid);
+  followLine(30, 0, 50, base_pid);
   Serial.print("started");
   brake();
-
-  /*
-
-  delay(3000);
-  straight(Kp, Ki, Kd, 600, base_pid, enc1, enc2);
   */
+ delay(3000);
+ straight(Kp, Ki, Kd, 0, base_pid, enc1, enc2);
+  
+
+/*
+  delay(3000);
+  straight(Kp, Ki, Kd, 254, base_pid, enc1, enc2);
+  brake();
+  delay(1000);
+  spin(90, 480, 1, enc1, enc2);
+  brake();
+  delay(1000);
+  spin(90, 480, 0, enc1, enc2);
+  brake();
+  */
+  
 
   /* arcing
   Encoder enc1(M1_ENC_A, M1_ENC_B);
