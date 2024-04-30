@@ -1,17 +1,15 @@
-#include "move.h"
+#include "lineFollow.h"
 
 #include <Arduino.h>
-#include <Adafruit_MCP3008.h>
-#include <Adafruit_MPU6050.h>
 #include <Encoder.h>
 
-Adafruit_MCP3008 adc1;
-Adafruit_MCP3008 adc2;
+#include <Adafruit_MPU6050.h>
+
 Adafruit_MPU6050 mpu;
 
 const float M_I_COUNTS_TO_A = (3.3 / 1024.0) / 0.120;
 
-const unsigned int PWM_VALUE = 512; // Max PWM given 8 bit resolution
+//const unsigned int PWM_VALUE = 350; // Max PWM given 8 bit resolution
 
 bool status = false;
 
@@ -19,14 +17,11 @@ float error;
 float last_error;
 float total_error;
 
-int base_pid = 450;
+int base_pid = 420;
 
-float Kp = 0.2;
-float Kd = 10;
+float Kp = 2;
 float Ki = 0;
-
-const unsigned int ADC_1_CS = 2;
-const unsigned int ADC_2_CS = 17;
+float Kd = 1;
 
 const unsigned int M1_IN_1 = 13;
 const unsigned int M1_IN_2 = 12;
@@ -68,12 +63,43 @@ void setup() {
   ledcAttachPin(M2_IN_1, M2_IN_1_CHANNEL);
   ledcAttachPin(M2_IN_2, M2_IN_2_CHANNEL);
 
+  adc1.begin(ADC_1_CS);  
+  adc2.begin(ADC_2_CS);
+
   pinMode(M1_I_SENSE, INPUT);
   pinMode(M2_I_SENSE, INPUT);
 
 }
 
 void loop() {
+
+  Encoder enc1(M1_ENC_A, M1_ENC_B);
+  Encoder enc2(M2_ENC_A, M2_ENC_B);
+
+/*
+  delay(3000);
+  followLine(30, 0, 50, base_pid);
+  Serial.print("started");
+  brake();
+  */
+ delay(3000);
+ straight(Kp, Ki, Kd, 0, base_pid, enc1, enc2);
+  
+
+/*
+  delay(3000);
+  straight(Kp, Ki, Kd, 254, base_pid, enc1, enc2);
+  brake();
+  delay(1000);
+  spin(90, 480, 1, enc1, enc2);
+  brake();
+  delay(1000);
+  spin(90, 480, 0, enc1, enc2);
+  brake();
+  */
+  
+
+  /* arcing
   Encoder enc1(M1_ENC_A, M1_ENC_B);
   Encoder enc2(M2_ENC_A, M2_ENC_B);
   
@@ -84,6 +110,7 @@ void loop() {
   arc(0.1, 180, 512, 1, enc1, enc2);
   delay(500);
   arc(0.001, 90, 512, 0, enc1, enc2);
+  */
 
   /*
   delay(3000);
