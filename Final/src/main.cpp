@@ -35,7 +35,7 @@ const int freq = 5000;
 const int ledChannel = 0;
 const int resolution = 10;
 
-const int M_PWM_FREQ = 5000;
+const int M_PWM_FREQ = 2500;
 const int M_PWM_BITS = 8;
 //const unsigned int MAX_PWM_VALUE = 512; // Max PWM given 8 bit resolution
 
@@ -78,7 +78,15 @@ void loop() {
   delay(3000);
   //followLine(20, 2, 18, 320, 1);
   //followLine(400, 0, 200, 400, 0);
-  followLine(20, 0, 760, 380, 0);
+  straight(2, 0, 0, 50, 420, enc1, enc2);
+  followLine(40, 0, 300, 420, 0); // 65 0 1000
+  straight(2, 0, 0, 0, 420, enc1, enc2);
+  //brake();
+  /*
+  followLine(65, 0, 1000, 380, 0); // 65 0 1000
+  straight(Kp, Ki, Kd, 50, base_pid, enc1, enc2);
+  brake();
+  */
 
   Serial.print("started");
   brake();

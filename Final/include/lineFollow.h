@@ -34,25 +34,28 @@ void digitalConvert(){
     } else {
       lineArray[2*i] = 0;
     }
-    Serial.print(lineArray[2*i]); Serial.print(" ");
+    // Serial.print(lineArray[2*i]); Serial.print(" ");
     // Serial.print(adc1_buf[i]); Serial.print("\t");
 
-    if (i<6) {
+    if (i<5) {
       if (adc2_buf[i]>650){
         lineArray[2*i+1] = 1;
       } else {
         lineArray[2*i+1] = 0;
       }
-      Serial.print(lineArray[2*i+1]); Serial.print(" ");
+      // Serial.print(lineArray[2*i+1]); Serial.print(" ");
       // Serial.print(adc2_buf[i]); Serial.print("\t");
     }
   }
+  //Serial.print('\n');
 }
 
 float getPosition(float previousPosition) {
   float pos = 0;
   uint8_t white_count = 0;
-  for (int i = 0; i < 13; i++) {
+  for (int i = 0; i < 11; i++) {
+
+    //Serial.print(lineArray[i]); Serial.print(" ");
     if ((lineArray[i] == 0)) {
       pos += i;
       white_count+=1;
@@ -64,6 +67,7 @@ float getPosition(float previousPosition) {
   if (white_count == 0) {
     return previousPosition;
   }
+  // Serial.print(pos/white_count); 
   return pos/white_count;
 }
 // --------------------------------------------------
@@ -108,10 +112,11 @@ bool blackDetect() {
 }
 
 // follow the line until a white box is hit
-void followLine(const int Kp, const int Ki, const int Kd, const int MAX_PWM, const bool dotted) {
+// if on endor dash, endor = 1, otherwise set to 0
+void followLine(const int Kp, const int Ki, const int Kd, const int MAX_PWM, const bool endor) {
     float error, errorTotal, control, t, tStart, tPrev, tNow, errorPrev;
     const float tInt = 10; // integration time in ms
-    float mid = 6.5; // sensor array midpoint
+    float mid = 6; // sensor array midpoint
 
     errorPrev = 0;
 
@@ -124,17 +129,6 @@ void followLine(const int Kp, const int Ki, const int Kd, const int MAX_PWM, con
         digitalConvert();
         float pos = getPosition(previousPosition);
 
-        int black_count = 0;
-        for (int i = 0; i < 13; i++) {
-          if (lineArray[i] == 1) {
-            black_count++;
-          } 
-        }
-
-        error = pos - mid;
-        errorTotal += error;
-
-        tNow = micros() / 1000.0;
         error = pos - mid;
         errorTotal += error;
           
@@ -151,15 +145,6 @@ void followLine(const int Kp, const int Ki, const int Kd, const int MAX_PWM, con
         }
         errorPrev = error;
         previousPosition = pos;
-        
-        if( (dotted) ) { //if following dotted line and seeing all black
-          if(lPWM < 300) {
-            lPWM = 300;
-          }
-          if(rPWM < 300) {
-            rPWM = 300;
-          }
-        }
 
         if (MAX_PWM > 0) {
             M1_forward((int)min(lPWM, MAX_PWM));
@@ -168,6 +153,9 @@ void followLine(const int Kp, const int Ki, const int Kd, const int MAX_PWM, con
         else {
             M1_backward((int)min(abs(lPWM), MAX_PWM));
             M2_backward((int)min(abs(rPWM), MAX_PWM));
+        }
+        if(endor && blackDetect()) { //if on endor dash and all black detected
+          break; // exit so that straight can take over in main
         }
         delay(tInt);
     }
