@@ -182,8 +182,6 @@ void straight(int kp, int ki, int kd, int mm, int MAX_PWM, Encoder& enc1, Encode
     error = 0.0;
     errorTotal = 0.0;
 
-    errorPrev = error;
-
     enc1.write(0);
     enc2.write(0);
     while (true) {
@@ -207,6 +205,7 @@ void straight(int kp, int ki, int kd, int mm, int MAX_PWM, Encoder& enc1, Encode
         }
 
         tPrev = tNow;
+        errorPrev = error;
 
         // check the distance
         if (mm != 0) {
