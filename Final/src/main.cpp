@@ -78,9 +78,9 @@ void loop() {
   delay(3000);
   //followLine(20, 2, 18, 320, 1);
   //followLine(400, 0, 200, 400, 0);
-  straight(2, 0, 0, 50, 420, enc1, enc2);
-  followLine(40, 0, 300, 420, 0); // 65 0 1000
-  straight(2, 0, 0, 0, 420, enc1, enc2);
+  straight(5, 0, 30, 250, 500, enc1, enc2);
+  //followLine(40, 0, 300, 420, 0); // 65 0 1000
+  //straight(2, 0, 0, 0, 420, enc1, enc2);
   //brake();
   /*
   followLine(65, 0, 1000, 380, 0); // 65 0 1000
