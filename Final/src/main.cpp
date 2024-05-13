@@ -74,8 +74,46 @@ void setup() {
 void loop() {
   Encoder enc1(M1_ENC_A, M1_ENC_B);
   Encoder enc2(M2_ENC_A, M2_ENC_B);
-  
+
   delay(3000);
+
+  // move out of the main starting box to the box to the dotted starting box
+  straight(5, 0, 30, 20, 420, enc1, enc2); // move up to get out of box
+  straight(5, 0, 30, 0, 420, enc1, enc2); // got until white box detected
+  brake();
+  delay(500);
+  straight(5, 0, 30, 300, 420, enc1, enc2); // get onto line to start line following
+  brake();
+  delay(500);
+  followLine(40, 0, 300, 420, 0); // dotted line
+
+  // asteriod
+  straight(5, 0, 30, 100, 420, enc1, enc2); // move up to get out of box
+  brake();
+  delay(500);
+  arc(0, 170, 420, 1, enc1, enc2); // turn out
+  brake();
+  delay(500);
+  straight(5, 0, 30, 200, 420, enc1, enc2);
+  brake();
+  delay(500);
+  //followLine(40, 0, 300, 420, 2);
+  //brake();
+  //delay(500);
+  arc(0, 170, 420, 0, enc1, enc2);
+  brake();
+  delay(500);
+  straight(5, 0, 30, 100, 420, enc1, enc2);
+  brake();
+  delay(500);
+  arc(0, 170, 420, 1, enc1, enc2); // turn to prepare to go striaght
+  brake();
+  delay(500);
+  //straight(5, 0, 30, 1450, 420, enc1, enc2);
+  straight(5, 0, 30, 0, 420, enc1, enc2); // go until line detected before sound section
+  brake();
+  delay(500);
+  arc(0, 170, 420, 0, enc1, enc2); // set up to line follow into sound section
 
   /*
   // first line follow part
