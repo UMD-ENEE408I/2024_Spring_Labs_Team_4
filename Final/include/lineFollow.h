@@ -14,11 +14,6 @@ int adc2_buf[8];
 uint8_t lineArray[13]; 
 float previousPosition = 6;
 
-const int speed_straight = 420;
-const int Kp_straight = 30;
-const int Ki_straight = 0;
-const int Kd_straight = 50;
-
 // from line-sensor ADC tutorial --------------------
 void readADC() {
   for (int i = 0; i < 8; i++) {
