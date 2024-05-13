@@ -75,15 +75,18 @@ void loop() {
 
   Encoder enc1(M1_ENC_A, M1_ENC_B);
   Encoder enc2(M2_ENC_A, M2_ENC_B);
-
-/*
   delay(3000);
-  followLine(30, 0, 50, base_pid);
+  //followLine(20, 2, 18, 320, 1);
+  //followLine(400, 0, 200, 400, 0);
+  followLine(20, 0, 760, 380, 0);
+
   Serial.print("started");
   brake();
-  */
+  
+  /*
  delay(3000);
  straight(Kp, Ki, Kd, 0, base_pid, enc1, enc2);
+ */
   
 
 /*
