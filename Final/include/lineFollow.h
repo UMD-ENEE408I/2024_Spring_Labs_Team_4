@@ -107,12 +107,14 @@ bool blackDetect() {
 }
 
 // follow the line until a white box is hit
-// if on endor dash, endor = 1, otherwise set to 0
-void followLine(const int Kp, const int Ki, const int Kd, const int MAX_PWM, const bool endor) {
+// if on endor dash, type = 1, for asteriod type = 2, otherwise set to 0
+void followLine(const int Kp, const int Ki, const int Kd, const int MAX_PWM, const bool type) {
     float error, errorTotal, control, t, tStart, tPrev, tNow, errorPrev;
     const float tInt = 10; // integration time in ms
     float mid = 6; // sensor array midpoint
 
+    tStart = micros();
+    t = 0;
     errorPrev = 0;
 
     int lPWM, rPWM;
@@ -149,8 +151,14 @@ void followLine(const int Kp, const int Ki, const int Kd, const int MAX_PWM, con
             M1_backward((int)min(abs(lPWM), MAX_PWM));
             M2_backward((int)min(abs(rPWM), MAX_PWM));
         }
-        if(endor && blackDetect()) { //if on endor dash and all black detected
+        if(type == 1 && blackDetect()) { //if on endor dash and all black detected
           break; // exit so that straight can take over in main
+        }
+        if(type == 2) {
+          t += micros() / 1000; // in ms
+          if(t-tStart > 100) { // if longer
+            break;
+          }
         }
         delay(tInt);
     }
