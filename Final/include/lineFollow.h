@@ -14,6 +14,11 @@ int adc2_buf[8];
 uint8_t lineArray[13]; 
 float previousPosition = 6;
 
+const int speed_straight = 420;
+const int Kp_straight = 30;
+const int Ki_straight = 0;
+const int Kd_straight = 50;
+
 // from line-sensor ADC tutorial --------------------
 void readADC() {
   for (int i = 0; i < 8; i++) {
@@ -83,10 +88,29 @@ bool boxDetect() {
     }
 }
 
+// detect if in an all-black space
+bool blackDetect() {
+    readADC();
+    digitalConvert();
+    uint8_t black_count = 0;
+    for (int i = 0; i < 13; i++) {
+        if (lineArray[i] == 1) {
+            black_count++;
+        } 
+    }
+
+    if (black_count >= 12) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
 // follow the line until a white box is hit
-void followLine(const int Kp, const int Ki, const int Kd, const int MAX_PWM) {
+void followLine(const int Kp, const int Ki, const int Kd, const int MAX_PWM, const bool dotted) {
     float error, errorTotal, control, t, tStart, tPrev, tNow, errorPrev;
-    const float tInt = 100 * (1/1000000.0); // integration time in s
+    const float tInt = 10; // integration time in ms
     float mid = 6.5; // sensor array midpoint
 
     errorPrev = 0;
@@ -96,19 +120,25 @@ void followLine(const int Kp, const int Ki, const int Kd, const int MAX_PWM) {
     rPWM = MAX_PWM;
 
     while (!boxDetect()) {
-
         readADC();
         digitalConvert();
         float pos = getPosition(previousPosition);
-        previousPosition = pos;
+
+        int black_count = 0;
+        for (int i = 0; i < 13; i++) {
+          if (lineArray[i] == 1) {
+            black_count++;
+          } 
+        }
 
         error = pos - mid;
         errorTotal += error;
 
-        tNow = micros() / 1000000.0;
+        tNow = micros() / 1000.0;
         error = pos - mid;
         errorTotal += error;
-        control = Kp * error + Ki * errorTotal * tInt + Kd * (error - errorPrev);
+          
+        control = Kp * error + Ki * errorTotal * tInt + Kd * (error - errorPrev)/tInt;
 
         lPWM = MAX_PWM - control;
         rPWM = MAX_PWM + control;
@@ -119,13 +149,17 @@ void followLine(const int Kp, const int Ki, const int Kd, const int MAX_PWM) {
         if(rPWM < 0) {
             rPWM = 0;
         }
-        Serial.print("----");
-        Serial.print(error);
-        Serial.print("----");
-        Serial.print(min(lPWM, MAX_PWM));
-        Serial.print("\t");
-        Serial.print(min(rPWM, MAX_PWM));
-        Serial.print("\n");
+        errorPrev = error;
+        previousPosition = pos;
+        
+        if( (dotted) ) { //if following dotted line and seeing all black
+          if(lPWM < 300) {
+            lPWM = 300;
+          }
+          if(rPWM < 300) {
+            rPWM = 300;
+          }
+        }
 
         if (MAX_PWM > 0) {
             M1_forward((int)min(lPWM, MAX_PWM));
@@ -135,8 +169,7 @@ void followLine(const int Kp, const int Ki, const int Kd, const int MAX_PWM) {
             M1_backward((int)min(abs(lPWM), MAX_PWM));
             M2_backward((int)min(abs(rPWM), MAX_PWM));
         }
-
-        errorPrev = error;
+        delay(tInt);
     }
     brake();
 }
@@ -157,8 +190,8 @@ void straight(int kp, int ki, int kd, int mm, int MAX_PWM, Encoder& enc1, Encode
       mm = mm - 350;
     }
 
-    float error, errorTotal, control, t, tStart, tPrev, tNow;
-    const float tInt = 100 * (1/1000000.0); // integration time in s
+    float error, errorTotal, control, t, tStart, tPrev, tNow, errorPrev;
+    const float tInt = 10; // integration time in ms
     int lPWM, rPWM;
     lPWM = MAX_PWM;
     rPWM = MAX_PWM;
@@ -166,14 +199,16 @@ void straight(int kp, int ki, int kd, int mm, int MAX_PWM, Encoder& enc1, Encode
     error = 0.0;
     errorTotal = 0.0;
 
+    errorPrev = error;
+
     enc1.write(0);
     enc2.write(0);
     while (true) {
         // update PID
-        tNow = micros() / 1000000.0;
+        tNow = micros() / 1000.0;
         error = enc1.read() + enc2.read(); // one is always negative if the motors are going in the same direction
         errorTotal += error;
-        control = kp * error + ki * errorTotal * tInt + kd * (tNow - tPrev)/tInt;
+        control = kp * error + ki * errorTotal * tInt + kd * (error - errorPrev)/tInt;
         //control = kp * error + ki * errorTotal * tInt + kd * (error - errorPrev)/tInt;
 
         lPWM = MAX_PWM - control;
@@ -217,5 +252,7 @@ void straight(int kp, int ki, int kd, int mm, int MAX_PWM, Encoder& enc1, Encode
         Serial.print("\t");
         Serial.print(control);
         Serial.println();
+
+        delay(tInt);
     }
 }
