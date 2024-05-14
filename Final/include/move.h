@@ -110,12 +110,14 @@ void arc(const float R, const float DEG, const int MAX_PWM, const bool LR, Encod
 // DEG: degrees to rotate in arc
 // MAX_PWM: maximum speed motor can go at
 // LR: left (1) or right (0) arc
-void spin(const float DEG, const int MAX_PWM, const bool LR, Encoder& enc1, Encoder& enc2) {
+void spin(float DEG, const int MAX_PWM, const bool LR, Encoder& enc1, Encoder& enc2) {
     const float M_PER_TICK = (PI * 0.032) / 360.0; // meters per tick
     const float REF_R = 4.3 / 100.0; // referance point in m: distance of wheel edge from center
     float s, sTick;
     int lPWM, rPWM;
     const float RAD = DEG * (PI/180);
+
+    DEG = DEG - 70;
     
     // NOTE: there are aproximately 360 ticks per rotation
 
@@ -130,7 +132,7 @@ void spin(const float DEG, const int MAX_PWM, const bool LR, Encoder& enc1, Enco
     // use the ecoders to check positioning
     enc1.write(0);
     enc2.write(0);
-    if (MAX_PWM > 0) {
+    if (LR) {
         M1_forward(abs(MAX_PWM));
         M2_backward(abs(MAX_PWM));
     }
@@ -156,10 +158,18 @@ void spin(const float DEG, const int MAX_PWM, const bool LR, Encoder& enc1, Enco
     }
 }
 
-// avoid an obstacle by performing an arc move
+// avoid an obstacle by performing an arc move of specified size
 // R: radius of arc in m from the edge of the robot (not center)
 // MAX_PWM: maximum speed motor can go at
 // LR: left (1) or right (0) arc
 void dodge(const float R, const int MAX_PWM, const bool LR, Encoder& enc1, Encoder& enc2) {
-    // TODO
+    spin(90, MAX_PWM, LR, enc1, enc2); // spin out, away from the line
+    brake();
+    delay(100);
+    arc(0.5, 180, MAX_PWM, !(LR), enc1, enc2); // arc in the opposite direction
+    brake();
+    delay(100);
+    spin(90, MAX_PWM, LR, enc1, enc2); // return back to the straight
+    brake();
 }
+

@@ -1,17 +1,15 @@
-#include "move.h"
+#include "lineFollow.h"
 
 #include <Arduino.h>
-#include <Adafruit_MCP3008.h>
-#include <Adafruit_MPU6050.h>
 #include <Encoder.h>
 
-Adafruit_MCP3008 adc1;
-Adafruit_MCP3008 adc2;
+#include <Adafruit_MPU6050.h>
+
 Adafruit_MPU6050 mpu;
 
 const float M_I_COUNTS_TO_A = (3.3 / 1024.0) / 0.120;
 
-const unsigned int PWM_VALUE = 512; // Max PWM given 8 bit resolution
+//const unsigned int PWM_VALUE = 350; // Max PWM given 8 bit resolution
 
 bool status = false;
 
@@ -19,14 +17,11 @@ float error;
 float last_error;
 float total_error;
 
-int base_pid = 450;
+int base_pid = 420;
 
-float Kp = 0.2;
-float Kd = 10;
+float Kp = 2;
 float Ki = 0;
-
-const unsigned int ADC_1_CS = 2;
-const unsigned int ADC_2_CS = 17;
+float Kd = 1;
 
 const unsigned int M1_IN_1 = 13;
 const unsigned int M1_IN_2 = 12;
@@ -40,7 +35,7 @@ const int freq = 5000;
 const int ledChannel = 0;
 const int resolution = 10;
 
-const int M_PWM_FREQ = 5000;
+const int M_PWM_FREQ = 2500;
 const int M_PWM_BITS = 8;
 //const unsigned int MAX_PWM_VALUE = 512; // Max PWM given 8 bit resolution
 
@@ -68,6 +63,9 @@ void setup() {
   ledcAttachPin(M2_IN_1, M2_IN_1_CHANNEL);
   ledcAttachPin(M2_IN_2, M2_IN_2_CHANNEL);
 
+  adc1.begin(ADC_1_CS);  
+  adc2.begin(ADC_2_CS);
+
   pinMode(M1_I_SENSE, INPUT);
   pinMode(M2_I_SENSE, INPUT);
 
@@ -76,68 +74,68 @@ void setup() {
 void loop() {
   Encoder enc1(M1_ENC_A, M1_ENC_B);
   Encoder enc2(M2_ENC_A, M2_ENC_B);
-  
+
   delay(3000);
 
-  arc(0.001, 90, 512, 0, enc1, enc2);
+  // move out of the main starting box to the box to the dotted starting box
+  straight(5, 0, 30, 20, 420, enc1, enc2); // move up to get out of box
+  straight(5, 0, 30, 0, 420, enc1, enc2); // got until white box detected
+  brake();
   delay(500);
-  arc(0.1, 180, 512, 1, enc1, enc2);
+  straight(5, 0, 30, 300, 420, enc1, enc2); // get onto line to start line following
+  brake();
   delay(500);
-  arc(0.001, 90, 512, 0, enc1, enc2);
+  followLine(40, 0, 300, 420, 0); // dotted line
+
+  // asteriod
+  straight(5, 0, 30, 100, 420, enc1, enc2); // move up to get out of box
+  brake();
+  delay(500);
+  arc(0, 170, 420, 1, enc1, enc2); // turn out
+  brake();
+  delay(500);
+  straight(5, 0, 30, 200, 420, enc1, enc2);
+  brake();
+  delay(500);
+  //followLine(40, 0, 300, 420, 2);
+  //brake();
+  //delay(500);
+  arc(0, 170, 420, 0, enc1, enc2);
+  brake();
+  delay(500);
+  straight(5, 0, 30, 100, 420, enc1, enc2);
+  brake();
+  delay(500);
+  arc(0, 170, 420, 1, enc1, enc2); // turn to prepare to go striaght
+  brake();
+  delay(500);
+  //straight(5, 0, 30, 1450, 420, enc1, enc2);
+  straight(5, 0, 30, 0, 420, enc1, enc2); // go until line detected before sound section
+  brake();
+  delay(500);
+  arc(0, 170, 420, 0, enc1, enc2); // set up to line follow into sound section
 
   /*
-  delay(3000);
-  spin(90, 480, 1, enc1, enc2);
-  delay(500);
-  spin(90, -480, 1, enc1, enc2);
-  delay(500);
-  spin(180, 480, 1, enc1, enc2);
-  delay(500);
-  spin(180, -480, 1, enc1, enc2);
-  delay(500);
-  spin(360, 480, 1, enc1, enc2);
-  delay(500);
+  // first line follow part
+  straight(5, 0, 30, 50, 420, enc1, enc2); // move up to get out of box
+  followLine(40, 0, 300, 420, 0);
+  straight(5, 0, 30, 0, 420, enc1, enc2); // move up to get into box
   */
-
-
-  /* draft straight move function from 04/01/2024 session:
-
-  // Create the encoder objects after the motor has
-  // stopped, else some sort exception is triggered
-  Encoder enc1(M1_ENC_A, M1_ENC_B);
-  Encoder enc2(M2_ENC_A, M2_ENC_B);
-
-  enc1.write(0);
-  enc2.write(0);
-
-  delay(1000);
-
-  while(true) {
-    long enc1_value = enc1.read();
-    long enc2_value = enc2.read();
-
-    int t_start = micros();
-    int t_end = micros();
-
-    error = enc1_value + enc2_value;
-    total_error += error;
-
-    int pid_value = Kp*error + Kd*(error-last_error) + Ki*total_error;
-    int right_motor = base_pid + pid_value;
-    int left_motor = base_pid - pid_value;
-
-    last_error = error;
-
-    M1_forward(min(left_motor,512));
-    M2_forward(min(right_motor,512));
-
-      Serial.print(enc1_value);
-      Serial.print("\t");
-      Serial.print(enc2_value);
-      Serial.print("\t");
-      Serial.print(error);
-      Serial.println();
-
-  }
+  
+  /*
+  // dotted line follow
+  straight(5, 0, 30, 50, 420, enc1, enc2); // move up to get out of box
+  followLine(40, 0, 300, 420, 0);
+  straight(5, 0, 30, 0, 420, enc1, enc2); // move up to get into box
   */
+  
+  /*
+  // endor dash
+  straight(5, 0, 3, 50, 420, enc1, enc2); // move up to get out of box
+  followLine(40, 0, 300, 420, 1); // follow until black detected
+  straight(5, 0, 3, 0, 420, enc1, enc2); // got straight until box
+  */
+  
+
+  brake();
 }
