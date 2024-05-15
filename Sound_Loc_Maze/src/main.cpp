@@ -297,7 +297,7 @@ int maze_solver(Encoder& enc1, Encoder& enc2){
       delay(2500);   
 
       char camera_reading = client.read(); 
-      while (camera_reading != 'N' || camera_reading != 'R'|| camera_reading != 'G' || camera_reading != 'B'){
+      while (camera_reading != 'N' && camera_reading != 'R'&& camera_reading != 'G' && camera_reading != 'B'){
         sprintf(buffer, "nan");
         client.print(buffer);
         delay(100);
