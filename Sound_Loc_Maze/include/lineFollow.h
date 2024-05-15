@@ -355,3 +355,100 @@ void followLine(const int Kp, const int Ki, const int Kd, const int MAX_PWM, con
     brake();
 }
 
+
+//like line folllow but breaks after a set distance
+//hopefully follows the line well and stops in a percise matter
+void followLine_distance(const int Kp, const int Ki, const int Kd, const int MAX_PWM, Encoder& enc1, Encoder& enc2,int mm){
+
+  float error, errorTotal, control, t, tStart, tPrev, tNow, errorPrev;
+  const float tInt = 10; // integration time in ms
+  float mid = 6.5; // sensor array midpoint
+
+  const float M_PER_TICK = (PI * 0.032) / 360.0; // meters per tick
+  const float REF_R = 4.3 / 100.0; // referance point in m: distance of wheel edge from center
+  float sTick = (mm/1000.0) / M_PER_TICK;
+
+  if (mm != 0) {
+    mm = mm - 350;
+  }
+
+
+    errorPrev = 0;
+
+    int lPWM, rPWM;
+    lPWM = MAX_PWM;
+    rPWM = MAX_PWM;
+
+    int ret = 0;
+
+    enc1.write(0);
+    enc2.write(0);
+    while (!ret) {
+        ret = boxDetect();
+        //Serial.print("RETURN VALUE FROM BOX:");
+        
+
+        // check the distance, breaks out if too far
+        if (mm != 0) {
+            if ((abs(enc1.read()) > sTick) || (abs(enc2.read()) > sTick)) {
+                brake();
+                break;
+            }
+        }
+
+
+        readADC();
+        digitalConvert();
+        float pos = getPosition(previousPosition);
+         
+        int black_count = 0;
+        for (int i = 0; i < 13; i++) {
+          if (lineArray[i] == 1) {
+            black_count++;
+          } 
+        }
+
+
+        //if the edges are lit up, ignore them since the maze is gridlike
+        //unsure if this will work or break system more
+        if (lineArray[0] == 0 && lineArray[1] == 0 && lineArray[2] == 0) {
+            pos = 6.5;
+        } else if (lineArray[10] == 0 && lineArray[11] == 0 && lineArray[12] == 0 ){
+          pos = 6.5;
+        }
+
+        error = pos - mid;
+        errorTotal += error;
+
+        tNow = micros() / 1000.0;
+        error = pos - mid;
+        errorTotal += error;
+          
+        control = Kp * error + Ki * errorTotal * tInt + Kd * (error - errorPrev)/tInt;
+
+        lPWM = MAX_PWM - control;
+        rPWM = MAX_PWM + control;
+
+        if(lPWM < 0) {
+            lPWM = 0;
+        }
+        if(rPWM < 0) {
+            rPWM = 0;
+        }
+        errorPrev = error;
+        previousPosition = pos;
+       
+        if (MAX_PWM > 0) {
+            M1_forward((int)min(lPWM, MAX_PWM));
+            M2_forward((int)min(rPWM, MAX_PWM));
+        }
+        else {
+            M1_backward((int)min(abs(lPWM), MAX_PWM));
+            M2_backward((int)min(abs(rPWM), MAX_PWM));
+        }
+        delay(tInt);
+    }
+    Serial.print("BREAKING");
+    brake();
+
+}

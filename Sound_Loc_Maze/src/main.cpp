@@ -44,7 +44,7 @@ float TURNING_RADIUS_METERS = 4.3 / 100.0; // Wheels are about 4.3 cm from pivot
 /*Seems that python script must be running for this to work*/
 int status = WL_IDLE_STATUS;
 const char *ssid = "PatsIphone";
-const char *password = "patshotspot";
+const char *password = "patshotspot408";
 WiFiClient client;
 const uint16_t port = 8090;
 const char * host = "172.20.10.3";
@@ -210,11 +210,13 @@ int sound_localization(Encoder& enc1, Encoder& enc2){
           sprintf(buffer, "ack");
           client.print(buffer);
           spin(170, 410, false, enc1, enc2);
+          //MAYBE REPLACE WITH followLine_distance
           straight(5, 0, 30, 100, 380, enc1, enc2);
           break;
         } else if (c == 'R'){
           sprintf(buffer, "ack");
           client.print(buffer);
+          //MAYBE REPLACE WITH followLine_distance
           straight(5, 0, 30, 100, 380, enc1, enc2);
           break;
         }
@@ -263,31 +265,72 @@ int loc[2] = {0,0};
 
 //solve the maze looking for blocks
 int maze_solver(Encoder& enc1, Encoder& enc2){
-
+  char buffer[100];
   //lawnmower search, look for the colored boxes
   
   //go through each row
-  int camera_reading = 0;
+  char camera_reading = 'N';
   for(int row = 0; row < 6; row++){
     //go through each column
-    for(int col = 0; col < 6; col++){
+    for(int col = 0; col < 5; col++){
       
       //TAKE A PICTURE AND LOOK FOR A BLOCK
+      //delay(100);
+
+      //try to connect
+      if (!client.connect(host, port)) {
+          Serial.println("Connection to host failed");
+          delay(1000);
+          continue;
+        }
+
+      //connected to the server, so turn right
+      Serial.println("Connected to server successful!");
+      
+      //send the command to the server to record to the left
+      sprintf(buffer, "MAZEBLOCK");
+      client.print(buffer);
+
+      //now wait until we get a message from the server
+      //f (client.available()) {  
+          //read the message, itll be either an L or an R   
+      delay(2500);   
+
+      char camera_reading = client.read(); 
+      while (camera_reading != 'N' || camera_reading != 'R'|| camera_reading != 'G' || camera_reading != 'B'){
+        sprintf(buffer, "nan");
+        client.print(buffer);
+        delay(100);
+        camera_reading = client.read();
+        Serial.println(camera_reading);
+      }
+        sprintf(buffer, "ack");
+        client.print(buffer);
+
 
       //do a wifi call here instead
-      camera_reading = 1;
+      //camera_reading = 0;
 
       //UPDATE THE SPACE IN FRONT OF LOC WITH INFO
+      int updateVal = 0;
+      if(camera_reading == 'R'){
+        updateVal = 1;
+      } else if (camera_reading == 'G'){
+        updateVal = 2;
+      } else if (camera_reading == 'B'){
+        updateVal = 3;
+      }
+
       if(row % 2 == 0){
-        maze[loc[0]][loc[1]+1] = camera_reading;
+        maze[loc[0]][loc[1]+1] = updateVal;
       } else {
-        maze[loc[0]][loc[1]-1] = camera_reading;
+        maze[loc[0]][loc[1]-1] = updateVal;
       }
 
       //IF NO BLOCK, MOVE FORWARD
-      if(camera_reading == 1){
-        //move forward one space
-        straight(2, 0, 1, 254, 400, enc1, enc2);
+      if(camera_reading == 'N'){
+        followLine_distance(30,0,300,350,enc1,enc2,235);
+        delay(100);
         if(row % 2 == 0){
           loc[1]++;
         } else {
@@ -296,6 +339,18 @@ int maze_solver(Encoder& enc1, Encoder& enc2){
 
       } else {
         //go aroud the block
+        //right
+        spin(74, 360, true, enc1, enc2);
+        followLine_distance(30,0,300,350,enc1,enc2,100);
+        //left
+        spin(68, 360, false, enc1, enc2);
+        //past the block
+        straight(5, 0, 30, 350, 380, enc1, enc2);
+        //left
+        spin(68, 360, false, enc1, enc2);
+        straight(5, 0, 30, 100, 380, enc1, enc2);
+        //right
+        spin(74, 360, true, enc1, enc2);
       }
 
     }
@@ -305,36 +360,93 @@ int maze_solver(Encoder& enc1, Encoder& enc2){
     //odd rows turn left
 
     if(row % 2 == 0){
-      spin(78, 360, true, enc1, enc2);
+      spin(74, 360, true, enc1, enc2);
     } else {
-      spin(78, 360, false, enc1, enc2);
+      spin(68, 360, false, enc1, enc2);
     }
   
+
+    //try to connect
+    if (!client.connect(host, port)) {
+          Serial.println("Connection to host failed");
+          delay(1000);
+          continue;
+        }
+
+      //connected to the server, so turn right
+      Serial.println("Connected to server successful!");
+      
+      //send the command to the server to record to the left
+      sprintf(buffer, "MAZEBLOCK");
+      client.print(buffer);
+
+      //now wait until we get a message from the server
+      //f (client.available()) {  
+          //read the message, itll be either an L or an R   
+      delay(2500);   
+
+      char camera_reading = client.read(); 
+      while (camera_reading != 'N' && camera_reading != 'R' && camera_reading != 'G' && camera_reading != 'B'){
+        sprintf(buffer, "nan");
+        client.print(buffer);
+        delay(100);
+        camera_reading = client.read();
+      }
+        sprintf(buffer, "ack");
+        client.print(buffer);
+
     //do a reading
     //do a wifi call here instead
-    camera_reading = 1;
+    //camera_reading = 0;
+
 
     //UPDATE THE SPACE IN FRONT OF LOC WITH INFO
-    maze[loc[0]+1][loc[1]] = camera_reading;
+    int updateVal = 0;
+    if(camera_reading == 'R'){
+      updateVal = 1;
+    } else if (camera_reading == 'G'){
+      updateVal = 2;
+    } else if (camera_reading == 'B'){
+      updateVal = 3;
+    }
+    maze[loc[0]+1][loc[1]] = updateVal;
 
       //IF NO BLOCK, MOVE FORWARD
-    if(camera_reading == 1){
+    if(camera_reading == 'N'){
       //move forward one space
-      straight(5, 0, 30, 250, 400, enc1, enc2);
+      //straight(5, 0, 30, 235, 370, enc1, enc2);
+      followLine_distance(30,0,300,350,enc1,enc2,234);
       loc[0]++;
     } else {
       //go aroud the block
+        //right
+        spin(74, 360, true, enc1, enc2);
+        followLine_distance(30,0,300,350,enc1,enc2,100);
+        //left
+        spin(68, 360, false, enc1, enc2);
+        //past the block
+        straight(5, 0, 30, 350, 380, enc1, enc2);
+        //left
+        spin(68, 360, false, enc1, enc2);
+        straight(5, 0, 30, 100, 380, enc1, enc2);
+        //right
+        spin(74, 360, true, enc1, enc2);
     }
 
-    //turn left or right onto the row
-    if(row % 2 == 0){
-      spin(78, 360, true, enc1, enc2);
-    } else {
-      spin(78, 360, false, enc1, enc2);
-    }
-
+    //turn left or right onto the row, except for the last row, then just go stright
+    if (row != 5){
+      if(row % 2 == 0){
+        spin(74, 360, true, enc1, enc2);
+      } else {
+        spin(68, 360, false, enc1, enc2);
+      }
   }
 
+  }
+  delay(1000);
+  //line follow to the box
+  followLine(30,0,300,350,0,enc1,enc2,0);
+  delay(1000);
 
   //post maze processing, counting colors and such
   //get the counts of the blocks and their colors
@@ -429,8 +541,21 @@ void loop() {
     delay(10000);
   }  */
 
-  //runs the maze portion of the code
-  //maze_solver(enc1,enc2);
+  //runs the maze portion of the code, testing movement
+    if(robot_state == 0){
+      //get from the box to the first intersection
+      robot_state++;
+      followLine_distance(30,0,300,350,enc1,enc2,440);
+      delay(1000);
+    }else if (robot_state == 1){
+      robot_state++;
+      maze_solver(enc1,enc2);
+    } else if (robot_state == 2){
+      robot_state = 0;
+      delay(10000);
+    }
+    
+   
  
   }
 
