@@ -117,9 +117,7 @@ int sound_localization(Encoder& enc1, Encoder& enc2){
     if (sound_state == 0){
       //attempt to connect to the server, if not stay in this state
       if (!client.connect(host, port)) {
-    
           Serial.println("Connection to host failed");
-    
           delay(1000);
           continue;
           //return;
@@ -127,17 +125,13 @@ int sound_localization(Encoder& enc1, Encoder& enc2){
     
         //connected to the server, so turn right
         Serial.println("Connected to server successful!");
-    
         //spin 90 degrees to the left
         spin(75, 420, false, enc1, enc2);
-
         //send the command to the server to record to the left
         sprintf(buffer, "SOUND1");
         client.print(buffer);
-
         //sound record for 2 seconds so wait 2100
         delay(2100);
-    
         //disconnect from the server
         Serial.println("Disconnecting...");
         client.stop();
@@ -195,14 +189,9 @@ int sound_localization(Encoder& enc1, Encoder& enc2){
       //send the command to the server to record to the left
       sprintf(buffer, "SOUND3");
       client.print(buffer);
-
-      //now wait until we get a message from the server
-      //f (client.available()) {  
-          //read the message, itll be either an L or an R   
       delay(2500);   
-
       char c = client.read(); 
-      while (c != 'L' || c!='R'){
+      while (c != 'L' && c!='R'){
         delay(100);
         Serial.write(c);
         if(c == 'L'){
@@ -210,13 +199,11 @@ int sound_localization(Encoder& enc1, Encoder& enc2){
           sprintf(buffer, "ack");
           client.print(buffer);
           spin(170, 410, false, enc1, enc2);
-          //MAYBE REPLACE WITH followLine_distance
           straight(5, 0, 30, 100, 380, enc1, enc2);
           break;
         } else if (c == 'R'){
           sprintf(buffer, "ack");
           client.print(buffer);
-          //MAYBE REPLACE WITH followLine_distance
           straight(5, 0, 30, 100, 380, enc1, enc2);
           break;
         }
@@ -226,7 +213,6 @@ int sound_localization(Encoder& enc1, Encoder& enc2){
         c = client.read();
       }
       sound_state++;
-      //}
       sprintf(buffer, "COMPLETE");
       client.print(buffer);
       delay(100);
@@ -526,8 +512,11 @@ void loop() {
   } else if (robot_state == 1){
     robot_state = 2;
     Serial.println("RUN THE SOUND CODE!!!!!");
+    
     //move up to the junction
+    //consider replacing this with lineFollow_distance(30,0,300,500,enc1,enc2,380);
     straight(5, 0, 30, 500, 380, enc1, enc2);
+    
     //run the sound code
     sound_localization(enc1,enc2);
     delay(100);
