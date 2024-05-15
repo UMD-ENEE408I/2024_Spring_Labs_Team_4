@@ -9,6 +9,7 @@ import socket
 
 #include the newSoundLocalization
 import newSoundLocalization as sound
+import camera2 as camera
 
 
 
@@ -60,6 +61,19 @@ while True:
       #looks for closing message
       #messageSent = c.recv(100)
 
+   #This is the code for the maze
+   elif "MAZEBLOCK" in str(messageSent):
+      #check if there is a found block
+
+      #UNCOMMENT THIS TO USE THE FINDBLOCK CODE IN CAMERA2
+      #val = camera.findBlock()
+      #RECOMMENT THIS TO USE THE FINDBLOCK CODE IN CAMERA2
+      val = 'B'
+      #send the block over wifi
+      while("ack" not in str(messageSent)):
+         c.send(bytes(val, 'utf-8'))
+         messageSent = c.recv(10)
+         print(messageSent)
 
 
    
