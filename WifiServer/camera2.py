@@ -106,7 +106,7 @@ def findBlock():
 
 #while(True):
     #look for a block
-#    f = findBlock()
+#   f = findBlock()
 #    print("Value Returned: ", f)
 
     #idea -> every intersection, run the findBlock
@@ -115,7 +115,7 @@ def findBlock():
     #if f is R its red
     #if f is G its green
     #send this f value over wifi if its requested, and have the robot react accordingly
-    #if its 0, have the robot follow the pre-determined route, if its anything else
+    #if its N, have the robot follow the pre-determined route, if its anything else
     #have the robot enter a dodgeing sequence to get around the block depending where it is on the maze
     
-#    time.sleep(2)
+    #sleep(2)
