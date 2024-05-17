@@ -62,7 +62,7 @@ void setup() {
 
 
   //connect to the hotspot
- 
+  //disable by commenting out...
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -194,7 +194,7 @@ int sound_localization(Encoder& enc1, Encoder& enc2){
       while (c != 'L' && c!='R'){
         delay(100);
         Serial.write(c);
-        if(c == 'L'){
+        if(c == 'L' ){
         //turn 180 to the left then move
           sprintf(buffer, "ack");
           client.print(buffer);
@@ -431,7 +431,7 @@ int maze_solver(Encoder& enc1, Encoder& enc2){
   }
   delay(1000);
   //line follow to the box
-  followLine(30,0,300,350,0,enc1,enc2,0);
+  followLine(30,0,300,350,0,enc1,enc2,0,false,false);
   delay(1000);
 
   //post maze processing, counting colors and such
@@ -528,9 +528,11 @@ void loop() {
     //enter center of box
     straight(5, 0, 30, 30, 380, enc1, enc2);
     delay(10000);
-  }  */
+  }  */ 
+
 
   //runs the maze portion of the code, testing movement
+  /*
     if(robot_state == 0){
       //get from the box to the first intersection
       robot_state++;
@@ -543,139 +545,140 @@ void loop() {
       robot_state = 0;
       delay(10000);
     }
+    */
+   
+
+
+    //see if we can get this to work by demo time
+    //look for a battery in the 6v range maybe?
+    //if not then retune asap
+
+    //BATTERY AT 8V
+    //task 1: Line of republic
+    //30/300 was origional
+    //works well for stright line
+
+    //WORKED UP TO SOUND AT 7.95V
+    
+    straight(5, 0, 30, 130, 420, enc1, enc2);
+    delay(10000);
+    followLine(40,0,500,380,0,enc1,enc2,false,false,false);
+    delay(100);
+    straight(5, 0, 30, 90, 420, enc1, enc2);
+    delay(100);
+    arc(0, 160, 420, 0, enc1, enc2);
+    delay(100);
+    straight(5, 0, 30, 130, 420, enc1, enc2);
+    //should be out of the second box by now
+
+    //task 2: figureout how to skip the maze
+    
+    //try line follow and turn break
+    followLine(40,0,500,390,0,enc1,enc2,true,true,false); //hopefully get to the corner and breaks
+    delay(100);
+    for(int i = 0; i< 6; i++){
+      followLine_distance(40,0,500,350,enc1,enc2,250);
+      delay(100);
+    }
+    followLine(40,0,500,380,0,enc1,enc2,false,false,false);
+
+    //enter the box
+    straight(5, 0, 30, 105, 420, enc1, enc2);
+    delay(100);
+    arc(0, 160, 420, 1, enc1, enc2);
+    delay(100);
+    straight(5, 0, 30,   100, 420, enc1, enc2);
+    //at the end of the box before dotted line
+
+    //task 3: Dotted Line
+    //this worked  V8 battery
+    
+    followLine(40,0,550,340,0,enc1,enc2,false,false,false);
+    delay(500);
+
+    //task 4: dodge
+    straight(5, 0, 30, 130, 420, enc1, enc2); // move up to get out of box
+    brake();
+    delay(500);
+    arc(0, 150, 420, 1, enc1, enc2); // turn out
+    brake();
+    delay(500);
+    straight(5, 0, 30, 100, 420, enc1, enc2);
+    brake();
+    delay(500);
+    //followLine(40, 0, 300, 420, 2);
+    //brake();
+    //delay(500);
+    arc(0, 150, 420, 0, enc1, enc2);
+
+    brake();
+    delay(500);
+    straight(5, 0, 30, 100, 420, enc1, enc2);
+    brake();
+    
+    delay(500);
+    //the long stright
+    arc(0, 160, 420, 1, enc1, enc2); // turn to prepare to go striaght
+    
+    brake();
+    delay(500);
+    //straight(5, 0, 30, 1450, 420, enc1, enc2);
+    straight(5, 0, 30, 0, 420, enc1, enc2); // go until line detected before sound section
+    brake();
+    delay(500);
+    arc(0, 170, 420, 0, enc1, enc2); // set 
+    
+
+    
+    //task 5: sound code (copy from above...)
+    //break after a turn
+    
+    delay(100);
+    followLine_distance(40,0,500,350,enc1,enc2,100);
+    delay(100);
+    followLine(40,0,500,380,0,enc1,enc2,true,true,false); //get to the right turn
+    delay(100);
+    followLine(40,0,500,380,0,enc1,enc2,false,false,true); //run until black reading
+    //run the sound function 
+    sound_localization(enc1,enc2);
+    delay(100);
+    followLine(40,0,500,360,0,enc1,enc2,true,true,false); //turn 1
+    delay(100);
+    followLine(40,0,500,360,0,enc1,enc2,true,true,false); //turn 2
+    delay(100);
+    followLine(40,0,500,360,0,enc1,enc2,true,true,false); //turn 3
+    delay(100);
+    followLine(40,0,550,340,0,enc1,enc2,false,false,false);//stop at the box
     
    
- 
+    //from box to the next box
+    straight(5, 0, 30, 105, 420, enc1, enc2);
+    delay(100);
+    arc(0, 160, 420, 1, enc1, enc2);
+    delay(100);
+    straight(5, 0, 30, 130, 420, enc1, enc2);//entering next box
+    delay(100);
+
+    //line follow to next box
+    followLine(40,0,500,320,0,enc1,enc2,false,false,false);
+
+    delay(100);
+    straight(5, 0, 30, 105, 380, enc1, enc2);
+    delay(100);
+    arc(0, 170, 420, 1, enc1, enc2); //turn to face last obsticle
+
+
+    //task 6: endor dash
+    //this seems to work well 
+    //battery 7.98 V
+    straight(5, 0, 3, 110, 420, enc1, enc2); // move up to get out of box
+    delay(100);
+    followLine(40, 0, 550, 360,0, enc1,enc2,false,false,true); // follow until black detected
+    delay(100);
+    //prev 400
+    straight_detect(2, 0, 0, 0, 360, enc1, enc2); // go straight until box
+
+
+    delay(3000);
+
   }
-
-
-
-
-
-
-
-
-
-
-
-
-  /*WiFiClient client = server.available();   // listen for incoming clients
-
-  Encoder enc1(M1_ENC_A, M1_ENC_B);
-  Encoder enc2(M2_ENC_A, M2_ENC_B);
-  
-
-  if (client) {                             // if you get a client,
-    Serial.println("New Client.");           // print a message out the serial port
-    String currentLine = "";                // make a String to hold incoming data from the client
-    while (client.connected()) {            // loop while the client's connected
-      if (client.available()) {             // if there's bytes to read from the client,
-        char c = client.read();             // read a byte, then
-        Serial.write(c);                    // print it out the serial monitor
-        if (c == '\n') {                    // if the byte is a newline character
-
-          // if the current line is blank, you got two newline characters in a row.
-          // that's the end of the client HTTP request, so send a response:
-          if (currentLine.length() == 0) {
-            // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
-            // and a content-type so the client knows what's coming, then a blank line:
-            client.println("HTTP/1.1 200 OK");
-            client.println("Content-type:text/html");
-            client.println();
-
-            // the content of the HTTP response follows the header:
-            //client.print("Click <a href=\"/RIGHT\">here</a> to turn Right.<br>");
-            //client.print("Click <a href=\"/LEFT\">here</a> to turn Left.<br>");
-            //client.print("Hello World <br>");
-            client.print("Hello World");
-
-            // The HTTP response ends with another blank line:
-            client.println();
-            // break out of the while loop:
-            break;
-          } else {    // if you got a newline, then clear currentLine:
-            currentLine = "";
-          }
-        } else if (c != '\r') {  // if you got anything else but a carriage return character,
-          currentLine += c;      // add it to the end of the currentLine
-        }
-        
-        // Check to see if the client request was "GET /H" or "GET /L":
-        if (currentLine.endsWith("GET /RIGHT")) {
-          //digitalWrite(LED_BUILTIN, HIGH);// GET /H turns the LED on
-
-
-          client.println("HTTP/1.1 200 OK");
-          client.println("Content-type:text/html");
-          client.println();
-          // the content of the HTTP response follows the header:
-          client.print("RIGHT<br>");
-          // The HTTP response ends with another blank line:
-          client.println();
-
-
-          spin(90, 450, false,  enc1, enc2); //turn right
-
-          //currentLine = "";
-
-        } else if (currentLine.endsWith("GET /LEFT")) {
-          //digitalWrite(LED_BUILTIN, LOW);                // GET /L turns the LED off
-
-          client.println("HTTP/1.1 200 OK");
-          client.println("Content-type:text/html");
-          client.println();
-          // the content of the HTTP response follows the header:
-          client.print("LEFT<br>");
-          // The HTTP response ends with another blank line:
-          client.println();   
-
-
-          spin(90, -450, true,  enc1, enc2);
-     
-        }
-      }
-    }
-
-    // close the connection:
-    client.stop();
-    Serial.println("Client Disconnected.");
-  }
-  */
-//}
-
-
-// const unsigned int M1_ENC_A = 39;
-// const unsigned int M1_ENC_B = 38;
-// const unsigned int M2_ENC_A = 37;
-// const unsigned int M2_ENC_B = 36;
-
-
-// void setup() {
-//   // Stop the right motor by setting pin 14 low
-//   // this pin floats high or is pulled
-//   // high during the bootloader phase for some reason
-//   pinMode(14, OUTPUT);
-//   digitalWrite(14, LOW);
-//   delay(100);
-
-
-//   Serial.begin(115200);
-// }
-
-// void loop() {
-//   // Create the encoder objects after the motor has
-//   // stopped, else some sort exception is triggered
-//   Encoder enc1(M1_ENC_A, M1_ENC_B);
-//   Encoder enc2(M2_ENC_A, M2_ENC_B);
-
-//   while(true) {
-//     long enc1_value = enc1.read();
-//     long enc2_value = enc2.read();
-    
-//     Serial.print(enc1_value);
-//     Serial.print("\t");
-//     Serial.print(enc2_value);
-//     Serial.println();
-//     delay(100); // Delay works now that interrupts are fixed
-//   }
-// }

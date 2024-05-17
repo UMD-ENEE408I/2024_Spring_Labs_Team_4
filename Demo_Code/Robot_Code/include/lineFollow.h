@@ -193,7 +193,7 @@ void straight(int kp, int ki, int kd, int mm, int MAX_PWM, Encoder& enc1, Encode
 
 
 // follow the line until a white box is hit
-void followLine(const int Kp, const int Ki, const int Kd, const int MAX_PWM, const bool dotted, Encoder& enc1, Encoder& enc2,bool turn_break) {
+void followLine(const int Kp, const int Ki, const int Kd, const int MAX_PWM, const bool dotted, Encoder& enc1, Encoder& enc2,bool turn_break, bool turn,bool blackCheck) {
     float error, errorTotal, control, t, tStart, tPrev, tNow, errorPrev;
     const float tInt = 10; // integration time in ms
     float mid = 6.5; // sensor array midpoint
@@ -217,90 +217,58 @@ void followLine(const int Kp, const int Ki, const int Kd, const int MAX_PWM, con
 
         /*CHECK IF WE ARE AT A LEFT OR A RIGHT TURN*/
         /*at a junction if 5 or more are active*/
-        
-        int lowC = 0;
-        int highC = 0;
-        
-        for (int i = 1; i < 13; i++) {
-            if (lineArray[i] == 0) {
-              if(i <= 6){
-                lowC++;
-              } else if (i >=8) {
-                highC++;
-              }
-            } 
-          }
-
-        Serial.println(highC);
-
-        if (lowC >=5  && highC <=3){
-            Serial.println("TURNING RIGHT");
-            brake();
-            delay(200);
-            straight(5, 0, 35, 15, 380, enc1, enc2);
-            spin(78, 360, true, enc1, enc2);
-
-            //break after a turn if nessassary, for sound localization
-            if (turn_break){
-              break;
-            }
-
-            errorPrev = error;
-            previousPosition = pos;
-      
-            continue;
-        } else if (highC >= 5 && lowC <=1) {
-            Serial.println("TURNING LEFT");
-            brake();
-            delay(200);
-            straight(5, 0, 30, 25, 380, enc1, enc2);
-            spin(78, 360, false, enc1, enc2);
-
-            //break after a turn if nessassary, for sound localization
-            if (turn_break){
-              break;
-            }
-
-            errorPrev = error;
-            previousPosition = pos;
-        
-
-            continue;
-        }
-        
-        /*
-
-
-        int count_turn = 0;
-        for (int i = 1; i < 13; i++) {
-          if (lineArray[i] == 0) {
-            count_turn++;
-          } 
-        }
-
-        int highC = 0;
-        int lowC = 0;
-        //we have a turn 
-        if(count_turn > 5 && count_turn < 9){
-          //check if its low or high, if low numbers turn right
-
-          //if at a box, break out dont turn
-          if (boxDetect()){
-            continue;
-          }
-
+        if(turn){
+          int lowC = 0;
+          int highC = 0;
+          
           for (int i = 1; i < 13; i++) {
-            if (lineArray[i] == 0) {
-              if(i < 7){
-                lowC++;
-              } else {
-                highC++;
+              if (lineArray[i] == 0) {
+                if(i <= 6){
+                  lowC++;
+                } else if (i >=8) {
+                  highC++;
+                }
+              } 
+            }
+
+          Serial.println(highC);
+
+          if (lowC >=5  && highC <=3){
+              Serial.println("TURNING RIGHT");
+              brake();
+              delay(200);
+              straight(5, 0, 35, 15, 380, enc1, enc2);
+              spin(78, 360, true, enc1, enc2);
+
+              //break after a turn if nessassary, for sound localization
+              if (turn_break){
+                break;
               }
-            } 
+
+              errorPrev = error;
+              previousPosition = pos;
+        
+              continue;
+          } else if (highC >= 5 && lowC <=1) {
+              Serial.println("TURNING LEFT");
+              brake();
+              delay(200);
+              straight(5, 0, 30, 25, 380, enc1, enc2);
+              spin(78, 360, false, enc1, enc2);
+
+              //break after a turn if nessassary, for sound localization
+              if (turn_break){
+                break;
+              }
+
+              errorPrev = error;
+              previousPosition = pos;
+          
+
+              continue;
           }
-
-
-        */
+        }
+        
 
       
          
@@ -309,6 +277,11 @@ void followLine(const int Kp, const int Ki, const int Kd, const int MAX_PWM, con
           if (lineArray[i] == 1) {
             black_count++;
           } 
+        }
+
+        //if we find its off the line, break if the flag is high
+        if(blackCheck && black_count >= 12){ 
+          break;
         }
 
         error = pos - mid;
@@ -451,4 +424,88 @@ void followLine_distance(const int Kp, const int Ki, const int Kd, const int MAX
     Serial.print("BREAKING");
     brake();
 
+}
+
+void straight_detect(int kp, int ki, int kd, int mm, int MAX_PWM, Encoder& enc1, Encoder& enc2) {
+    const float M_PER_TICK = (PI * 0.032) / 360.0; // meters per tick
+    const float REF_R = 4.3 / 100.0; // referance point in m: distance of wheel edge from center
+    float sTick = (mm/1000.0) / M_PER_TICK;
+
+    if (mm != 0) {
+      mm = mm - 350;
+    }
+
+    float error, errorTotal, control, t, tStart, tPrev, tNow, errorPrev;
+    const float tInt = 10; // integration time in ms
+    int lPWM, rPWM;
+    lPWM = MAX_PWM;
+    rPWM = MAX_PWM;
+    tPrev = 0.0;
+    error = 0.0;
+    errorTotal = 0.0;
+
+    errorPrev = error;
+
+    enc1.write(0);
+    enc2.write(0);
+    while (true) {
+        // update PID
+        tNow = micros() / 1000.0;
+        error = enc1.read() + enc2.read(); // one is always negative if the motors are going in the same direction
+        errorTotal += error;
+        control = kp * error + ki * errorTotal * tInt + kd * (error - errorPrev)/tInt;
+        //control = kp * error + ki * errorTotal * tInt + kd * (error - errorPrev)/tInt;
+
+        lPWM = MAX_PWM - control;
+        rPWM = MAX_PWM + control;
+
+        if (MAX_PWM > 0) {
+            M1_forward((int)min(lPWM, MAX_PWM));
+            M2_forward((int)min(rPWM, MAX_PWM));
+        }
+        else {
+            M1_backward((int)min(lPWM, MAX_PWM));
+            M2_backward((int)min(rPWM, MAX_PWM));
+        }
+
+        tPrev = tNow;
+
+        // check the distance
+        if (mm != 0) {
+            if ((abs(enc1.read()) > sTick) || (abs(enc2.read()) > sTick)) {
+                brake();
+                break;
+            }
+        }
+        else {
+            readADC();
+            digitalConvert();
+            int white_count = 0;
+            for (int i = 0; i < 13; i++) {
+              if (lineArray[i] == 0) {
+                white_count++;
+           } 
+        }
+            if (white_count > 2) {
+                brake();
+                break;
+            }
+        }
+        Serial.print(sTick);
+        Serial.print("\t");
+        Serial.print(enc1.read());
+        Serial.print("\t");
+        Serial.print(enc2.read());
+        Serial.print("\t");
+        Serial.print(error);
+        Serial.print("\t");
+        Serial.print(lPWM);
+        Serial.print("\t");
+        Serial.print(rPWM);
+        Serial.print("\t");
+        Serial.print(control);
+        Serial.println();
+
+        delay(tInt);
+    }
 }

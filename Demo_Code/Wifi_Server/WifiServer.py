@@ -11,8 +11,6 @@ import socket
 import newSoundLocalization as sound
 import camera2 as camera
 
-
-
 s = socket.socket()         
 # Create a socket object
 host = socket.gethostname() 
@@ -33,13 +31,9 @@ while True:
    c, addr = s.accept()     
 # Establish connection with client.
    print('Got connection from', addr)
-
    #recieve 100 chars message
    messageSent = c.recv(100)
-
-   
    print("This is the message from the robot:", messageSent)
-
    #if the robots message is SOUND(number) then go through the phases of the sound reading
    #record left
    if "SOUND1" in str(messageSent):
@@ -54,10 +48,10 @@ while True:
       print("phase3")
       dir = sound.compare_sounds("left_file.wav", "right_file.wav")
       print(dir)
-      while("ack" not in str(messageSent)):
-         c.send(bytes(dir, 'utf-8'))
-         messageSent = c.recv(10)
-         print(messageSent)
+      #while("ack" not in str(messageSent)):
+      c.send(bytes(dir, 'utf-8'))
+      messageSent = c.recv(10)
+      print(messageSent)
       #looks for closing message
       #messageSent = c.recv(100)
 
